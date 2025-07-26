@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header text-center">
+        <h3 class="mb-0">Test Results</h3>
+      </div>
+      <div class="card-body text-center">
+        <div class="mb-4">
+          <h4>Congratulations, {{ student_name }}!</h4>
+          <p class="text-muted">You have completed the QuantPrep test.</p>
+        </div>
+
+        <!-- Score Display -->
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <div class="card bg-primary text-white">
+              <div class="card-body">
+                <h5 class="card-title">Score</h5>
+                <h2 class="mb-0">{{ score }}/{{ total_questions }}</h2>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card bg-success text-white">
+              <div class="card-body">
+                <h5 class="card-title">Percentage</h5>
+                <h2 class="mb-0">{{ "%.1f"|format(percentage) }}%</h2>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card bg-info text-white">
+              <div class="card-body">
+                <h5 class="card-title">Performance</h5>
+                <h2 class="mb-0">
+                  {% if percentage >= 90 %}
+                    A+
+                  {% elif percentage >= 80 %}
+                    A
+                  {% elif percentage >= 70 %}
+                    B
+                  {% elif percentage >= 60 %}
+                    C
+                  {% else %}
+                    D
+                  {% endif %}
+                </h2>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Performance Message -->
+        <div class="alert {{ 'alert-success' if percentage >= 70 else 'alert-warning' if percentage >= 50 else 'alert-danger' }}" role="alert">
+          <h5 class="alert-heading">
+            {% if percentage >= 90 %}
+              <i class="bi bi-trophy"></i> Excellent Performance!
+            {% elif percentage >= 80 %}
+              <i class="bi bi-star"></i> Great Job!
+            {% elif percentage >= 70 %}
+              <i class="bi bi-hand-thumbs-up"></i> Good Work!
+            {% elif percentage >= 50 %}
+              <i class="bi bi-emoji-neutral"></i> Keep Practicing
+            {% else %}
+              <i class="bi bi-emoji-frown"></i> Needs Improvement
+            {% endif %}
+          </h5>
+          <p class="mb-0">
+            {% if percentage >= 90 %}
+              Outstanding! You have mastered the concepts very well.
+            {% elif percentage >= 80 %}
+              Very good performance! You have a strong understanding of the topics.
+            {% elif percentage >= 70 %}
+              Good work! You have a solid grasp of most concepts.
+            {% elif percentage >= 50 %}
+              You're on the right track. Focus on areas where you made mistakes.
+            {% else %}
+              Don't worry! Practice makes perfect. Review the concepts and try again.
+            {% endif %}
+          </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-center gap-3">
+          <a href="{{ url_for('student') }}" class="btn btn-primary">
+            <i class="bi bi-arrow-clockwise"></i> Take Test Again
+          </a>
+          <a href="{{ url_for('student') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-house"></i> Back to Home
+          </a>
+          <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
+            <i class="bi bi-box-arrow-right"></i> End Session
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

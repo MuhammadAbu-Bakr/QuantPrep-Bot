@@ -139,6 +139,27 @@
                     <div class="card-body">
                       <p class="text-muted">Use AI to automatically generate questions.</p>
                       <form method="post" action="/generate-ai-questions">
+                        <div class="mb-3">
+                          <label for="ai_topic" class="form-label">Topic</label>
+                          <input type="text" class="form-control" id="ai_topic" name="topic" placeholder="e.g., Percentages, Algebra" value="Averages">
+                        </div>
+                        <div class="mb-3">
+                          <label for="ai_count" class="form-label">Number of Questions</label>
+                          <select class="form-select" id="ai_count" name="count">
+                            <option value="1">1 Question</option>
+                            <option value="3">3 Questions</option>
+                            <option value="5">5 Questions</option>
+                            <option value="10">10 Questions</option>
+                          </select>
+                        </div>
+                        <div class="mb-3">
+                          <label for="ai_difficulty" class="form-label">Difficulty</label>
+                          <select class="form-select" id="ai_difficulty" name="difficulty">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                          </select>
+                        </div>
                         <button type="submit" class="btn btn-success">
                           <i class="bi bi-robot"></i> Generate AI Questions
                         </button>

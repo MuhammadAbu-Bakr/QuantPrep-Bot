@@ -1,24 +1,89 @@
 {% extends 'base.html' %}
 {% block content %}
-  <div class="question-container">
-    <h2>Question {{ question.id }}</h2>
-    <p>{{ question.question_text }}</p>
-    <form method="POST">
-      {% for option in question.options %}
-        <div>
-          <input type="radio" id="option{{ loop.index }}" name="selected_option" value="{{ option }}" required>
-          <label for="option{{ loop.index }}">{{ option }}</label>
+  {% if not session.get('student_name') %}
+    <!-- Name Entry Form -->
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="text-center mb-0">Welcome to QuantPrep Bot</h3>
+          </div>
+          <div class="card-body">
+            <p class="text-center text-muted mb-4">Please enter your name to start the test session.</p>
+            <form method="POST" action="{{ url_for('student') }}">
+              <div class="mb-3">
+                <label for="student_name" class="form-label">Your Name</label>
+                <input type="text" class="form-control" id="student_name" name="student_name" required>
+              </div>
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Start Test</button>
+              </div>
+            </form>
+          </div>
         </div>
-      {% endfor %}
-      <button type="submit">Submit Answer</button>
-    </form>
-    {% if feedback is defined %}
-      <div class="feedback">
-        <p>{{ feedback }}</p>
-        {% if explanation %}
-          <small>{{ explanation }}</small>
-        {% endif %}
       </div>
-    {% endif %}
-  </div>
+    </div>
+  {% else %}
+    <!-- Question Interface -->
+    <div class="row">
+      <div class="col-12">
+        <!-- Progress Bar -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold">Question {{ current_question_number }} of 30</span>
+              <span class="text-muted">{{ session.get('student_name') }}</span>
+            </div>
+            <div class="progress">
+              <div class="progress-bar" role="progressbar" style="width: {{ (current_question_number / 30) * 100 }}%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <span class="badge bg-primary me-2">{{ question.topic }}</span>
+              Question {{ current_question_number }}
+            </h5>
+          </div>
+          <div class="card-body">
+            <p class="question-text mb-4">{{ question.question_text }}</p>
+            
+            <form method="POST" action="{{ url_for('student') }}">
+              <input type="hidden" name="question_id" value="{{ question.id }}">
+              <div class="options-container">
+                {% for option in question.options %}
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="selected_option" 
+                           id="option{{ loop.index }}" value="{{ option }}" required>
+                    <label class="form-check-label" for="option{{ loop.index }}">
+                      {{ option }}
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+              
+              <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary">
+                  {% if current_question_number == 30 %}
+                    Finish Test
+                  {% else %}
+                    Next Question
+                  {% endif %}
+                </button>
+                
+                {% if current_question_number > 1 %}
+                  <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                    Previous
+                  </button>
+                {% endif %}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
 {% endblock %}
