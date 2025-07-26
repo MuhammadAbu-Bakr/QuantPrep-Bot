@@ -4,7 +4,7 @@ class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     topic = db.Column(db.String(100))
     question_text = db.Column(db.String(500))
-    options = db.Column(db.PickableTypes)
+    options = db.Column(db.Text)
     correct_answer = db.Column(db.String(100))
     explaination = db.Column(db.String(1000))
 
