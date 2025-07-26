@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h1>Teacher Dashboard</h1>
+
+  <section>
+    <h2>All Questions</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Topic</th>
+          <th>Question</th>
+          <th>Options</th>
+          <th>Correct Answer</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for question in questions %}
+        <tr>
+          <td>{{ question.id }}</td>
+          <td>{{ question.topic }}</td>
+          <td>{{ question.question_text }}</td>
+          <td>
+            <ul>
+              {% for option in question.options %}
+                <li>{{ option }}</li>
+              {% endfor %}
+            </ul>
+          </td>
+          <td>{{ question.correct_answer }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Student Attempts</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Student Name</th>
+          <th>Question ID</th>
+          <th>Selected Option</th>
+          <th>Correct?</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for attempt in attempts %}
+        <tr>
+          <td>{{ attempt.id }}</td>
+          <td>{{ attempt.student_name }}</td>
+          <td>{{ attempt.question_id }}</td>
+          <td>{{ attempt.selected_option }}</td>
+          <td>{{ 'Yes' if attempt.is_correct else 'No' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <form method="post" action="/generate-ai-questions">
+      <button type="submit">Generate AI Questions</button>
+    </form>
+  </section>
+{% endblock %}

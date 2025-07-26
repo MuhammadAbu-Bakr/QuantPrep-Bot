@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="question-container">
+    <h2>Question {{ question.id }}</h2>
+    <p>{{ question.question_text }}</p>
+    <form method="POST">
+      {% for option in question.options %}
+        <div>
+          <input type="radio" id="option{{ loop.index }}" name="selected_option" value="{{ option }}" required>
+          <label for="option{{ loop.index }}">{{ option }}</label>
+        </div>
+      {% endfor %}
+      <button type="submit">Submit Answer</button>
+    </form>
+    {% if feedback is defined %}
+      <div class="feedback">
+        <p>{{ feedback }}</p>
+        {% if explanation %}
+          <small>{{ explanation }}</small>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
