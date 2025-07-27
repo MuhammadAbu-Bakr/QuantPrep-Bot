@@ -6,7 +6,10 @@ from datetime import timedelta
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)  # Sessions expire after 2 hours
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2) 
 db = SQLAlchemy(app)
+
+
+app.jinja_env.filters['chr'] = chr
 
 from app import routes

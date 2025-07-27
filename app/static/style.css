@@ -84,14 +84,83 @@ ul {
   padding-left: 18px;
 }
 
+/* Tablet styles */
+@media (max-width: 1024px) {
+  .container {
+    max-width: 90%;
+    margin: 20px auto;
+  }
+  
+  button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+/* Mobile styles */
 @media (max-width: 600px) {
   .container {
-    padding: 10px 2px;
+    max-width: 95%;
+    margin: 10px auto;
+    padding: 16px 12px;
+    border-radius: 8px;
   }
+
+  h1, h2 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
+
+  .question-container {
+    margin-bottom: 20px;
+  }
+
+  /* Make tables responsive */
   table, thead, tbody, th, td, tr {
     display: block;
   }
-  table th, table td {
-    padding: 8px 4px;
+
+  table th {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  table td {
+    position: relative;
+    padding: 8px 4px 8px 50%;
+    border: none;
+    border-bottom: 1px solid #eee;
+  }
+
+  table td:before {
+    position: absolute;
+    left: 6px;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+    content: attr(data-label);
+    font-weight: bold;
+  }
+
+  /* Improve form elements for touch */
+  input[type="radio"] {
+    min-width: 20px;
+    min-height: 20px;
+    margin: 10px;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px 24px;
+    margin: 10px 0;
+    font-size: 16px;
+  }
+
+  /* Improve feedback visibility */
+  .feedback {
+    padding: 15px;
+    margin: 15px 0;
+    font-size: 14px;
   }
 }
