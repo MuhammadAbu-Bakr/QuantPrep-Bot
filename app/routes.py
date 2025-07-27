@@ -23,6 +23,7 @@ def student():
             session['question_ids'] = []
             session['answers'] = {}
             session['score'] = 0
+            session['ai_mode'] = False  # Track if in AI generation mode
             
             # Get 30 random questions
             all_questions = Question.query.all()
@@ -67,19 +68,20 @@ def student():
             if is_correct:
                 session['score'] = safe_int(session.get('score'), 0) + 1
             
-            # Save response to database
-            response = studentResponce(
-                student_name=session['student_name'],
-                question_id=question_id,
-                selected_option=selected_option,
-                is_correct=is_correct
-            )
-            db.session.add(response)
-            db.session.commit()
+            # Save response to database (only if not in AI mode)
+            if not session.get('ai_mode', False):
+                response = studentResponce(
+                    student_name=session['student_name'],
+                    question_id=question_id,
+                    selected_option=selected_option,
+                    is_correct=is_correct
+                )
+                db.session.add(response)
+                db.session.commit()
             
             # Check if test is complete (ensure both values are integers)
-            if current_question_number >= 30:
-                # Test completed - show results
+            if current_question_number >= 30 and not session.get('ai_mode', False):
+                # Test completed - show results with AI option
                 return redirect(url_for('test_results'))
             
             # Move to next question immediately
@@ -90,12 +92,21 @@ def student():
     current_question_number = safe_int(session.get('current_question_number'), 1)
     question_ids = session.get('question_ids', [])
     
-    if current_question_number > len(question_ids):
+    if current_question_number > len(question_ids) and not session.get('ai_mode', False):
         return redirect(url_for('test_results'))
     
+    # If we've exhausted regular questions but in AI mode, continue with AI questions
+    if current_question_number > len(question_ids) and session.get('ai_mode', False):
+        # Generate a new AI question if none exists
+        return redirect(url_for('student'))
+    
     # Get current question
-    current_question_id = question_ids[current_question_number - 1]
-    question = Question.query.get(current_question_id)
+    if current_question_number <= len(question_ids):
+        current_question_id = question_ids[current_question_number - 1]
+        question = Question.query.get(current_question_id)
+    else:
+        # No more questions available
+        return redirect(url_for('test_results'))
     
     if question:
         options = question.options
@@ -117,7 +128,8 @@ def student():
         
         return render_template('student.html', 
                             question=question_data, 
-                            current_question_number=current_question_number)
+                            current_question_number=current_question_number,
+                            ai_mode=session.get('ai_mode', False))
     
     return redirect(url_for('student'))
 
@@ -137,12 +149,29 @@ def test_results():
                          total_questions=total_questions,
                          percentage=percentage)
 
-@app.route('/logout')
-def logout():
-    # Clear all session data
+@app.route('/start-ai-session')
+def start_ai_session():
+    """Start an AI-generated question session"""
+    if not session.get('student_name'):
+        return redirect(url_for('student'))
+    
+    # Enable AI mode
+    session['ai_mode'] = True
+    session['ai_question_count'] = 0
+    flash('AI Question Session started! Questions will be generated on demand.', 'success')
+    return redirect(url_for('student'))
+
+@app.route('/end-session')
+def end_session():
+    """End the current session and go back to home"""
     session.clear()
     flash('Session ended. You can start a new test.', 'info')
     return redirect(url_for('student'))
+
+@app.route('/logout')
+def logout():
+    """Legacy logout route - redirects to end_session"""
+    return redirect(url_for('end_session'))
 
 @app.route('/teacher')
 def teacher():
@@ -208,6 +237,7 @@ def generate_ai_questions():
         topic = request.form.get('topic', 'Averages')
         count = safe_int(request.form.get('count'), 1)
         difficulty = request.form.get('difficulty', 'medium')
+        from_student = request.form.get('from_student') == 'true'
         
         if count > 10:  # Limit to prevent abuse
             count = 10
@@ -228,13 +258,25 @@ def generate_ai_questions():
                 )
                 db.session.add(new_question)
                 db.session.commit()
-                flash(f'AI generated question on "{topic}" added successfully!', 'success')
+                
+                if from_student:
+                    # For student interface, add to current session
+                    if 'question_ids' not in session:
+                        session['question_ids'] = []
+                    
+                    session['question_ids'].append(new_question.id)
+                    # Don't increment question number - let the normal flow handle it
+                    flash(f'New question on "{topic}" generated and added to your session!', 'success')
+                    return redirect(url_for('student'))
+                else:
+                    flash(f'AI generated question on "{topic}" added successfully!', 'success')
             else:
                 flash('Failed to generate question. Please try again.', 'error')
         else:
-            # Generate multiple questions
+            # Generate multiple questions (only from teacher interface)
             questions_data = generate_multiple_questions(topic, count, difficulty)
             if questions_data:
+                added_questions = []
                 for question_data in questions_data:
                     new_question = Question(
                         topic=question_data['topic'],
@@ -244,7 +286,17 @@ def generate_ai_questions():
                         explaination=question_data['explanation']
                     )
                     db.session.add(new_question)
+                    added_questions.append(new_question)
+                
                 db.session.commit()
+                
+                # If from student and in AI mode, add all questions to session
+                if from_student and session.get('ai_mode', False):
+                    if 'question_ids' not in session:
+                        session['question_ids'] = []
+                    for q in added_questions:
+                        session['question_ids'].append(q.id)
+                
                 flash(f'{len(questions_data)} AI generated questions on "{topic}" added successfully!', 'success')
             else:
                 flash('Failed to generate questions. Please try again.', 'error')
@@ -252,4 +304,8 @@ def generate_ai_questions():
     except Exception as e:
         flash(f'Error generating AI questions: {str(e)}', 'error')
     
-    return redirect(url_for('teacher'))
+    # Redirect based on context
+    if from_student:
+        return redirect(url_for('student'))
+    else:
+        return redirect(url_for('teacher'))
