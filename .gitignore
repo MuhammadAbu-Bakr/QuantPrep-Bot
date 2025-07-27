@@ -37,6 +37,7 @@ ENV/
 .idea/
 *.swp
 *.swo
+.zencoder
 
 # OS
 .DS_Store

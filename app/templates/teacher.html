@@ -1,5 +1,31 @@
 {% extends 'base.html' %}
+{% from 'auth_form.html' import auth_form %}
+
+{% block title %}Teacher Dashboard - QuantPrep Bot{% endblock %}
+
+{% block extra_css %}
+<style>
+  .auth-form {
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .auth-form h2 {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
+  {% if show_access_form %}
+  <div class="container">
+    {{ auth_form('Teacher') }}
+  </div>
+  {% else %}
   <div class="row">
     <div class="col-12">
       <h1 class="mb-4">Teacher Dashboard</h1>
@@ -223,4 +249,5 @@
       </div>
     </div>
   </div>
+  {% endif %}
 {% endblock %}

@@ -1,8 +1,23 @@
 {% extends 'base.html' %}
+{% from 'auth_form.html' import auth_form %}
 
 {% block title %}Student Portal - QuantPrep Bot{% endblock %}
 
 {% block extra_css %}
+<style>
+  .auth-form {
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .auth-form h2 {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+</style>
 <style>
   .question-card {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -76,7 +91,11 @@
 {% endblock %}
 
 {% block content %}
-  {% if not session.get('student_name') %}
+  {% if show_access_form %}
+    <div class="container">
+        {{ auth_form('Student') }}
+    </div>
+  {% elif not session.get('student_name') %}
     <!-- Welcome/Name Entry Section -->
     <div class="container-fluid">
       <div class="row justify-content-center align-items-center min-vh-100">
@@ -226,7 +245,7 @@
                              value="{{ option }}" 
                              required>
                       <label class="form-check-label w-100" for="option{{ loop.index }}">
-                        <span class="fw-semibold me-2">{{ loop.index | chr(64) }}.</span>
+                        <span class="fw-semibold me-2">{{ (loop.index + 64) | chr }}.</span>
                         {{ option }}
                       </label>
                     </div>

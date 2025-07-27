@@ -14,16 +14,31 @@ def safe_int(value, default=0):
 
 @app.route('/student', methods=['GET', 'POST'])
 def student():
-    # Handle name entry
-    if request.method == 'POST' and 'student_name' in request.form:
-        student_name = request.form.get('student_name')
-        if student_name and student_name.strip():
-            session['student_name'] = student_name.strip()
-            session['current_question_number'] = 1  # Ensure it's stored as int
-            session['question_ids'] = []
-            session['answers'] = {}
-            session['score'] = 0
-            session['ai_mode'] = False  # Track if in AI generation mode
+    if request.method == 'POST':
+        # Handle access code verification
+        if 'access_code' in request.form:
+            access_code = request.form.get('access_code')
+            if access_code == app.config['STUDENT_ACCESS_CODE']:
+                session['student_authenticated'] = True
+                return redirect(url_for('student'))
+            else:
+                flash('Invalid access code. Please try again.', 'error')
+                return render_template('student.html', show_access_form=True)
+        
+        # Handle name entry (only if authenticated)
+        if not session.get('student_authenticated'):
+            flash('Please enter the access code first.', 'error')
+            return render_template('student.html', show_access_form=True)
+            
+        if 'student_name' in request.form:
+            student_name = request.form.get('student_name')
+            if student_name and student_name.strip():
+                session['student_name'] = student_name.strip()
+                session['current_question_number'] = 1  # Ensure it's stored as int
+                session['question_ids'] = []
+                session['answers'] = {}
+                session['score'] = 0
+                session['ai_mode'] = False  # Track if in AI generation mode
             
             # Get 30 random questions
             all_questions = Question.query.all()
@@ -173,8 +188,20 @@ def logout():
     """Legacy logout route - redirects to end_session"""
     return redirect(url_for('end_session'))
 
-@app.route('/teacher')
+@app.route('/teacher', methods=['GET', 'POST'])
 def teacher():
+    if request.method == 'POST' and 'access_code' in request.form:
+        access_code = request.form.get('access_code')
+        if access_code == app.config['TEACHER_ACCESS_CODE']:
+            session['teacher_authenticated'] = True
+            return redirect(url_for('teacher'))
+        else:
+            flash('Invalid access code. Please try again.', 'error')
+            return render_template('teacher.html', show_access_form=True)
+    
+    if not session.get('teacher_authenticated'):
+        return render_template('teacher.html', show_access_form=True)
+
     questions = Question.query.all()
     questions_data = []
     for q in questions:
