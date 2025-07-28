@@ -26,11 +26,11 @@ def student():
                 return render_template('student.html', show_access_form=True)
         
         # Handle name entry (only if authenticated)
-        if not session.get('student_authenticated'):
-            flash('Please enter the access code first.', 'error')
-            return render_template('student.html', show_access_form=True)
-            
-        if 'student_name' in request.form:
+        elif 'student_name' in request.form:
+            if not session.get('student_authenticated'):
+                flash('Please enter the access code first.', 'error')
+                return render_template('student.html', show_access_form=True)
+                
             student_name = request.form.get('student_name')
             if student_name and student_name.strip():
                 session['student_name'] = student_name.strip()
@@ -40,68 +40,72 @@ def student():
                 session['score'] = 0
                 session['ai_mode'] = False  # Track if in AI generation mode
             
-            # Get 30 random questions
-            all_questions = Question.query.all()
-            if len(all_questions) < 30:
-                flash(f'Only {len(all_questions)} questions available. Please add more questions.', 'warning')
-                session['question_ids'] = [q.id for q in all_questions]
+                # Get 30 random questions
+                all_questions = Question.query.all()
+                if len(all_questions) < 30:
+                    flash(f'Only {len(all_questions)} questions available. Please add more questions.', 'warning')
+                    session['question_ids'] = [q.id for q in all_questions]
+                else:
+                    session['question_ids'] = random.sample([q.id for q in all_questions], 30)
+                
+                return redirect(url_for('student'))
             else:
-                session['question_ids'] = random.sample([q.id for q in all_questions], 30)
+                flash('Please enter your name.', 'error')
+                return redirect(url_for('student'))
+        
+        # Handle question submission
+        elif 'selected_option' in request.form:
+            # Safe conversion of form data
+            question_id = safe_int(request.form.get('question_id'))
+            selected_option = request.form.get('selected_option')
+            current_question_number = safe_int(session.get('current_question_number'), 1)
             
-            return redirect(url_for('student'))
-        else:
-            flash('Please enter your name.', 'error')
-            return redirect(url_for('student'))
+            if question_id == 0:  # Invalid question_id
+                flash('Invalid question ID.', 'error')
+                return redirect(url_for('student'))
+            
+            # Get the current question
+            question = Question.query.get(question_id)
+            if question:
+                # Check if answer is correct
+                is_correct = selected_option == question.correct_answer
+                
+                # Update session data
+                session['answers'][str(question_id)] = {  # Use string key for consistency
+                    'selected': selected_option,
+                    'correct': is_correct
+                }
+                
+                if is_correct:
+                    session['score'] = safe_int(session.get('score'), 0) + 1
+                
+                # Save response to database (only if not in AI mode)
+                if not session.get('ai_mode', False):
+                    response = studentResponce(
+                        student_name=session['student_name'],
+                        question_id=question_id,
+                        selected_option=selected_option,
+                        is_correct=is_correct
+                    )
+                    db.session.add(response)
+                    db.session.commit()
+                
+                # Check if test is complete (ensure both values are integers)
+                if current_question_number >= 30 and not session.get('ai_mode', False):
+                    # Test completed - show results with AI option
+                    return redirect(url_for('test_results'))
+                
+                # Move to next question immediately
+                session['current_question_number'] = current_question_number + 1
+                return redirect(url_for('student'))
+    
+    # Check authentication for GET requests
+    if not session.get('student_authenticated'):
+        return render_template('student.html', show_access_form=True)
     
     # Check if student has started the test
     if not session.get('student_name'):
         return render_template('student.html')
-    
-    # Handle question submission
-    if request.method == 'POST' and 'selected_option' in request.form:
-        # Safe conversion of form data
-        question_id = safe_int(request.form.get('question_id'))
-        selected_option = request.form.get('selected_option')
-        current_question_number = safe_int(session.get('current_question_number'), 1)
-        
-        if question_id == 0:  # Invalid question_id
-            flash('Invalid question ID.', 'error')
-            return redirect(url_for('student'))
-        
-        # Get the current question
-        question = Question.query.get(question_id)
-        if question:
-            # Check if answer is correct
-            is_correct = selected_option == question.correct_answer
-            
-            # Update session data
-            session['answers'][str(question_id)] = {  # Use string key for consistency
-                'selected': selected_option,
-                'correct': is_correct
-            }
-            
-            if is_correct:
-                session['score'] = safe_int(session.get('score'), 0) + 1
-            
-            # Save response to database (only if not in AI mode)
-            if not session.get('ai_mode', False):
-                response = studentResponce(
-                    student_name=session['student_name'],
-                    question_id=question_id,
-                    selected_option=selected_option,
-                    is_correct=is_correct
-                )
-                db.session.add(response)
-                db.session.commit()
-            
-            # Check if test is complete (ensure both values are integers)
-            if current_question_number >= 30 and not session.get('ai_mode', False):
-                # Test completed - show results with AI option
-                return redirect(url_for('test_results'))
-            
-            # Move to next question immediately
-            session['current_question_number'] = current_question_number + 1
-            return redirect(url_for('student'))
     
     # Show current question
     current_question_number = safe_int(session.get('current_question_number'), 1)
