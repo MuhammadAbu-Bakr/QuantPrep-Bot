@@ -4,16 +4,12 @@ import re
 from typing import Dict, List, Optional
 from config import GOOGLE_API_KEY
 
-# Configure Gemini API
 genai.configure(api_key=GOOGLE_API_KEY)
 
 def clean_json_response(response_text: str) -> str:
-    """Clean and extract JSON from Gemini response"""
-    # Remove markdown code blocks if present
     response_text = re.sub(r'```json\s*', '', response_text)
     response_text = re.sub(r'```\s*$', '', response_text)
     
-    # Find JSON object boundaries
     start_idx = response_text.find('{')
     end_idx = response_text.rfind('}') + 1
     
@@ -23,30 +19,23 @@ def clean_json_response(response_text: str) -> str:
     return response_text
 
 def validate_question_data(question_data: Dict) -> bool:
-    """Validate that question data has all required fields"""
     required_fields = ['topic', 'question_text', 'options', 'correct_answer', 'explanation']
     
-    # Check if all required fields exist
     for field in required_fields:
         if field not in question_data:
             return False
     
-    # Validate options is a list with 4 items
     if not isinstance(question_data['options'], list) or len(question_data['options']) != 4:
         return False
     
-    # Validate correct_answer is one of the options
     if question_data['correct_answer'] not in question_data['options']:
         return False
     
     return True
 
 def generate_question(topic: str = "Averages", difficulty: str = "medium") -> Optional[Dict]:
-    """
-    Generate a quantitative reasoning MCQ using Gemini API
-    """
     try:
-        # Create a more specific prompt for better results
+        
         prompt = f"""
         Create 1 quantitative reasoning multiple choice question on the topic "{topic}" for FSC level NAT test.
         
@@ -69,21 +58,21 @@ def generate_question(topic: str = "Averages", difficulty: str = "medium") -> Op
         Do not include any text before or after the JSON.
         """
         
-        # Generate response using Gemini
+        
         model = genai.GenerativeModel('gemini-pro')
         response = model.generate_content(prompt)
         
         if not response.text:
             return None
         
-        # Clean and parse the response
+        
         response_text = response.text.strip()
         json_str = clean_json_response(response_text)
         
         try:
             question_data = json.loads(json_str)
             
-            # Validate the question data
+           
             if validate_question_data(question_data):
                 return question_data
             else:
@@ -100,7 +89,6 @@ def generate_question(topic: str = "Averages", difficulty: str = "medium") -> Op
         return create_fallback_question(topic, difficulty)
 
 def create_fallback_question(topic: str, difficulty: str) -> Dict:
-    """Create a fallback question when AI generation fails"""
     fallback_questions = {
         "Averages": {
             "easy": {
@@ -124,7 +112,6 @@ def create_fallback_question(topic: str, difficulty: str) -> Dict:
         }
     }
     
-    # Get fallback question or create a basic one
     if topic in fallback_questions and difficulty in fallback_questions[topic]:
         fallback = fallback_questions[topic][difficulty]
     else:
@@ -144,9 +131,6 @@ def create_fallback_question(topic: str, difficulty: str) -> Dict:
     }
 
 def generate_multiple_questions(topic: str = "Averages", count: int = 5, difficulty: str = "medium") -> List[Dict]:
-    """
-    Generate multiple questions
-    """
     questions = []
     max_retries = 3
     
@@ -154,12 +138,10 @@ def generate_multiple_questions(topic: str = "Averages", count: int = 5, difficu
         question = None
         retries = 0
         
-        # Try to generate a question with retries
         while question is None and retries < max_retries:
             question = generate_question(topic, difficulty)
             retries += 1
         
-        # If still None after retries, create fallback
         if question is None:
             question = create_fallback_question(topic, difficulty)
         
@@ -168,10 +150,8 @@ def generate_multiple_questions(topic: str = "Averages", count: int = 5, difficu
     return questions
 
 def test_ai_generation():
-    """Test function to verify AI generation is working"""
     print("Testing AI question generation...")
     
-    # Test single question generation
     question = generate_question("Percentages", "medium")
     if question:
         print("✅ Single question generation successful")
@@ -180,7 +160,6 @@ def test_ai_generation():
     else:
         print("❌ Single question generation failed")
     
-    # Test multiple question generation
     questions = generate_multiple_questions("Algebra", 3, "easy")
     if questions and len(questions) == 3:
         print(f"✅ Multiple question generation successful ({len(questions)} questions)")
@@ -190,5 +169,4 @@ def test_ai_generation():
     return question is not None and len(questions) == 3
 
 if __name__ == "__main__":
-    # Run test when script is executed directly
     test_ai_generation()

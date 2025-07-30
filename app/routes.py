@@ -6,7 +6,6 @@ import ast
 import random
 
 def safe_int(value, default=0):
-    """Safely convert value to int with fallback"""
     try:
         return int(value) if value is not None else default
     except (ValueError, TypeError):
@@ -15,7 +14,7 @@ def safe_int(value, default=0):
 @app.route('/student', methods=['GET', 'POST'])
 def student():
     if request.method == 'POST':
-        # Handle access code verification
+        
         if 'access_code' in request.form:
             access_code = request.form.get('access_code')
             if access_code == app.config['STUDENT_ACCESS_CODE']:
@@ -25,7 +24,7 @@ def student():
                 flash('Invalid access code. Please try again.', 'error')
                 return render_template('student.html', show_access_form=True)
         
-        # Handle name entry (only if authenticated)
+        
         elif 'student_name' in request.form:
             if not session.get('student_authenticated'):
                 flash('Please enter the access code first.', 'error')
@@ -34,11 +33,11 @@ def student():
             student_name = request.form.get('student_name')
             if student_name and student_name.strip():
                 session['student_name'] = student_name.strip()
-                session['current_question_number'] = 1  # Ensure it's stored as int
+                session['current_question_number'] = 1  
                 session['question_ids'] = []
                 session['answers'] = {}
                 session['score'] = 0
-                session['ai_mode'] = False  # Track if in AI generation mode
+                session['ai_mode'] = False  
             
                 # Get 30 random questions
                 all_questions = Question.query.all()
@@ -55,7 +54,7 @@ def student():
         
         # Handle question submission
         elif 'selected_option' in request.form:
-            # Safe conversion of form data
+            
             question_id = safe_int(request.form.get('question_id'))
             selected_option = request.form.get('selected_option')
             current_question_number = safe_int(session.get('current_question_number'), 1)
@@ -64,7 +63,7 @@ def student():
                 flash('Invalid question ID.', 'error')
                 return redirect(url_for('student'))
             
-            # Get the current question
+            
             question = Question.query.get(question_id)
             if question:
                 # Check if answer is correct
