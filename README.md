@@ -84,7 +84,7 @@ A comprehensive web-based practice and monitoring system designed for FSC studen
 Create a `.env` file in the root directory with the following variables:
 
 ```env
-# Gemini API Configuration (Optional - for AI features)
+# Gemini API Configuration (For AI features)
 GOOGLE_API_KEY=your_gemini_api_key_here
 
 # Flask Configuration
